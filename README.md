@@ -138,4 +138,12 @@ server 192.168.0.12
 sudo systemctl restart ntp
 ```
 
-
+## How to use?
+```bash
+git init
+git remote add origin https://github.com/solnyun/CROS-RT.git
+git remote -v
+git fetch --all
+git reset --hard origin/main
+git pull origin main
+```
