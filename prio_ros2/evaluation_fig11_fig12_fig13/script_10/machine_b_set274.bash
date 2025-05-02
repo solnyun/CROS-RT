@@ -1,0 +1,83 @@
+#!/bin/bash
+
+# Print usage information and exit
+print_usage() {
+    echo "Usage: $0 <vanilla|framework> <with_nonRT_pl|no>"
+    exit 1
+}
+
+if [ "$#" -ne 2 ]; then
+    print_usage
+fi
+
+type=$1
+model=$2
+
+# Create a directory to store the result data
+# CreateDIR=result/
+# if [ ! -d "$CreateDIR" ]; then
+#    mkdir "$CreateDIR"
+# fi
+ros2 run evaluation_3_randomdag uunifast_node -n node274_0_1 -p 35 -st topic274_0_0 -pt topic274_0_1 -u 0.029489231360926016 > ./result_10chains/node274_0_1.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node274_1_1 -p 71 -st topic274_1_0 -pt topic274_1_1 -u 0.016924965213595544 > ./result_10chains/node274_1_1.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node274_2_1 -p 222 -st topic274_2_0 -pt topic274_2_1 -u 0.008841591849587271 > ./result_10chains/node274_2_1.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node274_3_1 -p 230 -st topic274_3_0 -pt topic274_3_1 -u 0.010575833665726064 > ./result_10chains/node274_3_1.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node274_4_1 -p 257 -st topic274_4_0 -pt topic274_4_1 -u 0.03762786558135714 > ./result_10chains/node274_4_1.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node274_5_1 -p 417 -st topic274_5_0 -pt topic274_5_1 -u 0.0011645158384411824 > ./result_10chains/node274_5_1.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node274_6_1 -p 454 -st topic274_6_0 -pt topic274_6_1 -u 0.011406570876205183 > ./result_10chains/node274_6_1.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node274_7_1 -p 634 -st topic274_7_0 -pt topic274_7_1 -u 0.003706372972109906 > ./result_10chains/node274_7_1.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node274_8_1 -p 658 -st topic274_8_0 -pt topic274_8_1 -u 0.017411356712144596 > ./result_10chains/node274_8_1.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node274_9_1 -p 738 -st topic274_9_0 -pt topic274_9_1 -u 0.006832746349949849 > ./result_10chains/node274_9_1.txt &
+sleep 20
+finalize_framework() {
+    if [ "$type" == "framework" ]; then
+        if [ "$model" == "with_nonRT" ]; then
+            python3 pri_remove.py "$file_name_motor"
+        fi
+        for filepath in "${files[@]}"; do
+            file=$(echo "$filepath" | cut -d' ' -f1)
+            python3 pri_remove.py "$file"
+        done
+    fi
+}
+
+
+# Priority Assignments
+declare -a files=(
+    "./result_10chains/node274_0_1.txt 90"
+    "./result_10chains/node274_1_1.txt 89"
+    "./result_10chains/node274_2_1.txt 88"
+    "./result_10chains/node274_3_1.txt 87"
+    "./result_10chains/node274_4_1.txt 86"
+    "./result_10chains/node274_5_1.txt 85"
+    "./result_10chains/node274_6_1.txt 84"
+    "./result_10chains/node274_7_1.txt 83"
+    "./result_10chains/node274_8_1.txt 82"
+    "./result_10chains/node274_9_1.txt 81"
+)
+
+for filepath in "${files[@]}"; do
+    file=$(echo "$filepath" | cut -d' ' -f1)
+    priority=$(echo "$filepath" | cut -d' ' -f2)
+    if [ "$type" == "vanilla" ]; then
+        python3 pri_assign.py $file $priority
+    elif [ "$type" == "framework" ]; then
+        python3 pri_identifier.py $file $priority
+    fi
+done
+echo "End Priority Assignment"
+
+# Finalize by performing a final command and killing any remaining processes
+/home/orin2/prio_ros2/evaluation_2_fig10/wait_signal 192.168.0.21 9797
+echo "End Running"
+sudo pkill uunifast_node
+finalize_framework

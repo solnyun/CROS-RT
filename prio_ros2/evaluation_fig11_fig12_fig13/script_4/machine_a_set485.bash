@@ -1,0 +1,77 @@
+#!/bin/bash
+
+# Print usage information and exit
+print_usage() {
+    echo "Usage: $0 <vanilla|framework> <with_nonRT_pl|no>"
+    exit 1
+}
+
+if [ "$#" -ne 2 ]; then
+    print_usage
+fi
+
+type=$1
+model=$2
+
+# Create a directory to store the result data
+# CreateDIR=result/
+# if [ ! -d "$CreateDIR" ]; then
+#    mkdir "$CreateDIR"
+# fi
+ros2 run evaluation_3_randomdag uunifast_node -n node485_0_2 -p 510 -st topic485_0_1 -pt None -u 0.021566615805149514 > ./result_4chains/node485_0_2.txt &
+ros2 run evaluation_3_randomdag uunifast_node -n node485_1_2 -p 681 -st topic485_1_1 -pt None -u 0.024475669095740615 > ./result_4chains/node485_1_2.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node485_2_2 -p 737 -st topic485_2_1 -pt None -u 0.09638152004061558 > ./result_4chains/node485_2_2.txt &
+ros2 run evaluation_3_randomdag uunifast_node -n node485_3_2 -p 839 -st topic485_3_1 -pt None -u 0.02499356800881251 > ./result_4chains/node485_3_2.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node485_0_0 -p 510 -st none -pt topic485_0_0 -u 0.010687776232887192 > ./result_4chains/node485_0_0.txt &
+ros2 run evaluation_3_randomdag uunifast_node -n node485_1_0 -p 681 -st none -pt topic485_1_0 -u 0.06301159258813127 > ./result_4chains/node485_1_0.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node485_2_0 -p 737 -st none -pt topic485_2_0 -u 0.12600500016275049 > ./result_4chains/node485_2_0.txt &
+ros2 run evaluation_3_randomdag uunifast_node -n node485_3_0 -p 839 -st none -pt topic485_3_0 -u 0.028654676423510037 > ./result_4chains/node485_3_0.txt &
+sleep 20
+finalize_framework() {
+    if [ "$type" == "framework" ]; then
+        if [ "$model" == "with_nonRT" ]; then
+            python3 pri_remove.py "$file_name_motor"
+        fi
+        for filepath in "${files[@]}"; do
+            file=$(echo "$filepath" | cut -d' ' -f1)
+            python3 pri_remove.py "$file"
+        done
+    fi
+}
+
+
+# Priority Assignments
+declare -a files=(
+    "./result_4chains/node485_0_0.txt 90"
+    "./result_4chains/node485_0_2.txt 90"
+    "./result_4chains/node485_1_0.txt 89"
+    "./result_4chains/node485_1_2.txt 89"
+    "./result_4chains/node485_2_0.txt 88"
+    "./result_4chains/node485_2_2.txt 88"
+    "./result_4chains/node485_3_0.txt 87"
+    "./result_4chains/node485_3_2.txt 87"
+)
+
+for filepath in "${files[@]}"; do
+    file=$(echo "$filepath" | cut -d' ' -f1)
+    priority=$(echo "$filepath" | cut -d' ' -f2)
+    if [ "$type" == "vanilla" ]; then
+        python3 pri_assign.py $file $priority
+    elif [ "$type" == "framework" ]; then
+        python3 pri_identifier.py $file $priority
+    fi
+done
+echo "End Priority Assignment"
+
+# Finalize by performing a final command and killing any remaining processes
+sleep 60s
+sudo pkill -USR1 uunifast_node
+echo "Set timer signal!"
+sleep 200s
+echo "End Running"
+sudo pkill uunifast_node
+finalize_framework
+/home/orin5/prio_ros2/evaluation_2_fig10/send_signal 127.0.0.1 9999

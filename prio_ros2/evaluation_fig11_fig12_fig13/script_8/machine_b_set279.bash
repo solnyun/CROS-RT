@@ -1,0 +1,77 @@
+#!/bin/bash
+
+# Print usage information and exit
+print_usage() {
+    echo "Usage: $0 <vanilla|framework> <with_nonRT_pl|no>"
+    exit 1
+}
+
+if [ "$#" -ne 2 ]; then
+    print_usage
+fi
+
+type=$1
+model=$2
+
+# Create a directory to store the result data
+# CreateDIR=result/
+# if [ ! -d "$CreateDIR" ]; then
+#    mkdir "$CreateDIR"
+# fi
+ros2 run evaluation_3_randomdag uunifast_node -n node279_0_1 -p 47 -st topic279_0_0 -pt topic279_0_1 -u 0.024187919472728803 > ./result_8chains/node279_0_1.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node279_1_1 -p 125 -st topic279_1_0 -pt topic279_1_1 -u 0.020733342185314252 > ./result_8chains/node279_1_1.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node279_2_1 -p 171 -st topic279_2_0 -pt topic279_2_1 -u 0.05878831193413758 > ./result_8chains/node279_2_1.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node279_3_1 -p 197 -st topic279_3_0 -pt topic279_3_1 -u 0.05568629169581474 > ./result_8chains/node279_3_1.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node279_4_1 -p 420 -st topic279_4_0 -pt topic279_4_1 -u 0.037662321981020874 > ./result_8chains/node279_4_1.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node279_5_1 -p 582 -st topic279_5_0 -pt topic279_5_1 -u 0.00994606225841152 > ./result_8chains/node279_5_1.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node279_6_1 -p 588 -st topic279_6_0 -pt topic279_6_1 -u 0.0008010747049434358 > ./result_8chains/node279_6_1.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node279_7_1 -p 775 -st topic279_7_0 -pt topic279_7_1 -u 0.0016650921325866222 > ./result_8chains/node279_7_1.txt &
+sleep 20
+finalize_framework() {
+    if [ "$type" == "framework" ]; then
+        if [ "$model" == "with_nonRT" ]; then
+            python3 pri_remove.py "$file_name_motor"
+        fi
+        for filepath in "${files[@]}"; do
+            file=$(echo "$filepath" | cut -d' ' -f1)
+            python3 pri_remove.py "$file"
+        done
+    fi
+}
+
+
+# Priority Assignments
+declare -a files=(
+    "./result_8chains/node279_0_1.txt 90"
+    "./result_8chains/node279_1_1.txt 89"
+    "./result_8chains/node279_2_1.txt 88"
+    "./result_8chains/node279_3_1.txt 87"
+    "./result_8chains/node279_4_1.txt 86"
+    "./result_8chains/node279_5_1.txt 85"
+    "./result_8chains/node279_6_1.txt 84"
+    "./result_8chains/node279_7_1.txt 83"
+)
+
+for filepath in "${files[@]}"; do
+    file=$(echo "$filepath" | cut -d' ' -f1)
+    priority=$(echo "$filepath" | cut -d' ' -f2)
+    if [ "$type" == "vanilla" ]; then
+        python3 pri_assign.py $file $priority
+    elif [ "$type" == "framework" ]; then
+        python3 pri_identifier.py $file $priority
+    fi
+done
+echo "End Priority Assignment"
+
+# Finalize by performing a final command and killing any remaining processes
+/home/orin2/prio_ros2/evaluation_2_fig10/wait_signal 192.168.0.21 9797
+echo "End Running"
+sudo pkill uunifast_node
+finalize_framework

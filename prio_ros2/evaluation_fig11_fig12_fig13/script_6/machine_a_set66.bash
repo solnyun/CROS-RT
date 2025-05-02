@@ -1,0 +1,87 @@
+#!/bin/bash
+
+# Print usage information and exit
+print_usage() {
+    echo "Usage: $0 <vanilla|framework> <with_nonRT_pl|no>"
+    exit 1
+}
+
+if [ "$#" -ne 2 ]; then
+    print_usage
+fi
+
+type=$1
+model=$2
+
+# Create a directory to store the result data
+# CreateDIR=result/
+# if [ ! -d "$CreateDIR" ]; then
+#    mkdir "$CreateDIR"
+# fi
+ros2 run evaluation_3_randomdag uunifast_node -n node66_0_2 -p 30 -st topic66_0_1 -pt None -u 0.05345111630500465 > ./result_6chains/node66_0_2.txt &
+ros2 run evaluation_3_randomdag uunifast_node -n node66_1_2 -p 57 -st topic66_1_1 -pt None -u 0.05798876691672239 > ./result_6chains/node66_1_2.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node66_2_2 -p 82 -st topic66_2_1 -pt None -u 0.04501409752010213 > ./result_6chains/node66_2_2.txt &
+ros2 run evaluation_3_randomdag uunifast_node -n node66_3_2 -p 312 -st topic66_3_1 -pt None -u 0.019840983824649022 > ./result_6chains/node66_3_2.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node66_4_2 -p 528 -st topic66_4_1 -pt None -u 0.00233071362754525 > ./result_6chains/node66_4_2.txt &
+ros2 run evaluation_3_randomdag uunifast_node -n node66_5_2 -p 611 -st topic66_5_1 -pt None -u 0.0008782356692941335 > ./result_6chains/node66_5_2.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node66_0_0 -p 30 -st none -pt topic66_0_0 -u 0.011296591529858901 > ./result_6chains/node66_0_0.txt &
+ros2 run evaluation_3_randomdag uunifast_node -n node66_1_0 -p 57 -st none -pt topic66_1_0 -u 0.022190528359034678 > ./result_6chains/node66_1_0.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node66_2_0 -p 82 -st none -pt topic66_2_0 -u 0.001830746424457519 > ./result_6chains/node66_2_0.txt &
+ros2 run evaluation_3_randomdag uunifast_node -n node66_3_0 -p 312 -st none -pt topic66_3_0 -u 0.016033559071221948 > ./result_6chains/node66_3_0.txt &
+sleep 20
+ros2 run evaluation_3_randomdag uunifast_node -n node66_4_0 -p 528 -st none -pt topic66_4_0 -u 0.002447702583360273 > ./result_6chains/node66_4_0.txt &
+ros2 run evaluation_3_randomdag uunifast_node -n node66_5_0 -p 611 -st none -pt topic66_5_0 -u 0.04014389866442259 > ./result_6chains/node66_5_0.txt &
+sleep 20
+finalize_framework() {
+    if [ "$type" == "framework" ]; then
+        if [ "$model" == "with_nonRT" ]; then
+            python3 pri_remove.py "$file_name_motor"
+        fi
+        for filepath in "${files[@]}"; do
+            file=$(echo "$filepath" | cut -d' ' -f1)
+            python3 pri_remove.py "$file"
+        done
+    fi
+}
+
+
+# Priority Assignments
+declare -a files=(
+    "./result_6chains/node66_0_0.txt 90"
+    "./result_6chains/node66_0_2.txt 90"
+    "./result_6chains/node66_1_0.txt 89"
+    "./result_6chains/node66_1_2.txt 89"
+    "./result_6chains/node66_2_0.txt 88"
+    "./result_6chains/node66_2_2.txt 88"
+    "./result_6chains/node66_3_0.txt 87"
+    "./result_6chains/node66_3_2.txt 87"
+    "./result_6chains/node66_4_0.txt 86"
+    "./result_6chains/node66_4_2.txt 86"
+    "./result_6chains/node66_5_0.txt 85"
+    "./result_6chains/node66_5_2.txt 85"
+)
+
+for filepath in "${files[@]}"; do
+    file=$(echo "$filepath" | cut -d' ' -f1)
+    priority=$(echo "$filepath" | cut -d' ' -f2)
+    if [ "$type" == "vanilla" ]; then
+        python3 pri_assign.py $file $priority
+    elif [ "$type" == "framework" ]; then
+        python3 pri_identifier.py $file $priority
+    fi
+done
+echo "End Priority Assignment"
+
+# Finalize by performing a final command and killing any remaining processes
+sleep 130s
+sudo pkill -USR1 uunifast_node
+echo "Set timer signal!"
+sleep 200s
+echo "End Running"
+sudo pkill uunifast_node
+finalize_framework
+/home/orin5/prio_ros2/evaluation_2_fig10/send_signal 127.0.0.1 9999
