@@ -1,6 +1,13 @@
-# CROS-RT: Cross-Layer Priority Scheduling for Predictable Inter-Process Communication in ROS2
+# CROS-RT: Cross-Layer Priority Scheduling for Predictable Inter-Process Communication in ROS 2
 
 This repository provides the code and resources used in the research on CROS-RT.
+
+## Authors
+- Sohyun Kim
+- Juho Song
+- Sangeun Oh
+- Kilho Lee
+- Hoon Sung Chwa
 
 ## Requirements
 
